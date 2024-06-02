@@ -1,0 +1,140 @@
+﻿@page "/editsubscriber"
+
+
+
+
+<div>
+    <div class="w-50">
+        @StatusMessage
+    </div>
+    <h4 class="mb-4">Edit subscriber</h4>
+    <EditForm class="form-group" FormName="subscriberform" Model="SubscriberForm" OnValidSubmit="HandleSubmit" Enhance novalidate>
+        <DataAnnotationsValidator />
+        <div class="mb-3">
+            <label class="form-check-label">Email</label>
+            <InputText class="form-control" @bind-Value="SubscriberForm.Email" />
+        </div>
+        <div class="mb-3">
+            <label class="form-check-label">Daily Newsletter</label>
+            <InputCheckbox class="form-check-input" @bind-Value="SubscriberForm.DailyNewsletter" />
+        </div>
+        <div class="mb-3">
+            <label class="form-check-label">AdvertisingUpdates</label>
+            <InputCheckbox class="form-check-input" @bind-Value="SubscriberForm.AdvertisingUpdates" />
+        </div>
+        <div class="mb-3">
+            <label class="form-check-label">WeekInReview</label>
+            <InputCheckbox class="form-check-input" @bind-Value="SubscriberForm.WeekInReview" />
+        </div>
+        <div class="mb-3">
+            <label class="form-check-label">EventUpdates</label>
+            <InputCheckbox class="form-check-input" @bind-Value="SubscriberForm.EventUpdates" />
+        </div>
+        <div class="mb-3">
+            <label class="form-check-label">StartupsWeekly</label>
+            <InputCheckbox class="form-check-input" @bind-Value="SubscriberForm.StartupsWeekly" />
+        </div>
+        <div class="mb-3">
+            <label class="form-check-label">Podcasts</label>
+            <InputCheckbox class="form-check-input" @bind-Value="SubscriberForm.Podcasts" />
+        </div>
+        <button class="btn btn-primary" type="submit">Save changes</button>
+    </EditForm>
+</div>
+
+
+
+@code {
+
+    [SupplyParameterFromQuery]
+    public string? Email { get; set; }
+
+    private Subscriber currentSubscriber = default!;
+
+    [SupplyParameterFromQuery]
+    public string StatusMessage { get; set; } = "";
+
+
+    [SupplyParameterFromForm]
+    private SubscribeModel SubscriberForm { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Email == null)
+        {
+            NavigationManager.NavigateTo("/not-found");
+        }
+
+        await GetSubscriberById(Email!);
+
+
+    }
+
+    private async Task GetSubscriberById(string email)
+    {
+
+        var subscriber = await Http.GetFromJsonAsync<Subscriber>($"https://silicon-newsletterprovider.azurewebsites.net/api/subscriber/{email}?code=VrtNJz9ANmZnm4R_7USYvjadqkyGhkiYs7VFLjGItOqpAzFuXxkXJw%3D%3D");
+        if (subscriber != null)
+        {
+            currentSubscriber = subscriber;
+
+            SubscriberForm.DailyNewsletter = subscriber.DailyNewsletter;
+            SubscriberForm.AdvertisingUpdates = subscriber.AdvertisingUpdates;
+            SubscriberForm.WeekInReview = subscriber.WeekInReview;
+            SubscriberForm.EventUpdates = subscriber.EventUpdates;
+            SubscriberForm.StartupsWeekly = subscriber.StartupsWeekly;
+            SubscriberForm.Podcasts = subscriber.Podcasts;
+        }
+        else
+        {
+            StatusMessage = "Subscriber not found";
+            NavigationManager.NavigateTo("/not-found");
+        }
+
+    }
+
+    private async Task HandleSubmit()
+    {
+        currentSubscriber.Email = SubscriberForm.Email;
+        currentSubscriber.DailyNewsletter = SubscriberForm.DailyNewsletter;
+        currentSubscriber.AdvertisingUpdates = SubscriberForm.AdvertisingUpdates;
+        currentSubscriber.WeekInReview = SubscriberForm.WeekInReview;
+        currentSubscriber.EventUpdates = SubscriberForm.EventUpdates;
+        currentSubscriber.StartupsWeekly = SubscriberForm.StartupsWeekly;
+        currentSubscriber.Podcasts = SubscriberForm.Podcasts;
+
+        var updateResult = await Http.PutAsJsonAsync($"https://silicon-newsletterprovider.azurewebsites.net/api/subscriber/{currentSubscriber.Email}?code=2PtV6Z3YJKaU05qP4rAHWh0svEGuRj61UWizB5pNHT1AAzFuXpkEAw%3D%3D", currentSubscriber);
+        if (updateResult.IsSuccessStatusCode)
+        {
+            StatusMessage = "User was updated";
+        }
+        else
+        {
+            StatusMessage = "User was not updated";
+        }
+    }
+
+
+    private sealed class SubscribeModel
+    {
+        public string Email { get; set; } = null!;
+        public bool DailyNewsletter { get; set; }
+        public bool AdvertisingUpdates { get; set; }
+        public bool WeekInReview { get; set; }
+        public bool EventUpdates { get; set; }
+        public bool StartupsWeekly { get; set; }
+        public bool Podcasts { get; set; }
+    }
+
+    private sealed class Subscriber
+    {
+        public string Email { get; set; } = null!;
+        public bool DailyNewsletter { get; set; }
+        public bool AdvertisingUpdates { get; set; }
+        public bool WeekInReview { get; set; }
+        public bool EventUpdates { get; set; }
+        public bool StartupsWeekly { get; set; }
+        public bool Podcasts { get; set; }
+    }
+
+}

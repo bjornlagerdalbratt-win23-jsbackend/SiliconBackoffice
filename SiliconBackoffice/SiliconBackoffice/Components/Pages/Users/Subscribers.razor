@@ -1,0 +1,134 @@
+﻿@page "/subscribers"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+
+
+
+@attribute [StreamRendering]
+
+
+<div class="container">
+
+
+    @if (!string.IsNullOrWhiteSpace(StatusMessage))
+    {
+        <div class="alert alert-danger error-message">
+            @StatusMessage
+        </div>
+    }
+
+
+
+    <div class="subscribers">
+        <h1>Subscribers</h1>
+
+
+        @if (subscribers != null)
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>DailyNewsletter</th>
+                        <th>AdvertisingUpdates</th>
+                        <th>WeekInReview</th>
+                        <th>EventUpdates</th>
+                        <th>StartupsWeekly</th>
+                        <th>Podcasts</th>
+                        <th>Option</th>
+                    </tr>
+                </thead>
+
+
+                <tbody>
+
+                    @foreach (var subscriber in subscribers)
+                    {
+                        <tr>
+                            <th>@subscriber.Email</th>
+                            <th>@subscriber.DailyNewsletter</th>
+                            <th>@subscriber.AdvertisingUpdates</th>
+                            <th>@subscriber.WeekInReview</th>
+                            <th>@subscriber.EventUpdates</th>
+                            <th>@subscriber.StartupsWeekly</th>
+                            <th>@subscriber.Podcasts</th>
+                            <th>
+                                <a href="/editsubscriber?email=@subscriber.Email">Edit</a>
+
+                            </th>
+                        </tr>
+                    }
+
+                </tbody>
+
+
+
+            </table>
+        }
+        else
+        {
+            <p>Loading...</p>
+        }
+
+
+    </div>
+</div>
+
+@code {
+    private Subscriber[]? subscribers;
+
+    [SupplyParameterFromQuery]
+    public string StatusMessage { get; set; } = "";
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            subscribers = await Http.GetFromJsonAsync<Subscriber[]>("https://silicon-newsletterprovider.azurewebsites.net/api/GetAllSubscribers?code=9TTAiRMrIzUswqpQB3anruTZrOb53bRINwlfFA1_C952AzFugPdsZA%3D%3D");
+
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error loading subscribers: {ex.Message}";
+        }
+    }
+
+    private async Task DeleteSubscriberAsync(Subscriber subscriber)
+    {
+
+        try
+        {
+            var response = await Http.DeleteAsync($"https://silicon-newsletterprovider.azurewebsites.net/api/UnSubscribe?code=gBbP_WxXfBNF7Q3IOeL316GAzO3CQ72JPMxejTrIyYGjAzFut58_OQ%3D%3D");
+            if (response.IsSuccessStatusCode)
+            {
+                StatusMessage = $"Subscriber {subscriber.Email} unsubscribed successfully!";
+                StateHasChanged();
+            }
+            else
+            {
+                StatusMessage = $"Error removing Subscriber {subscriber.Email}: {response.ReasonPhrase}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error removing Subscriber {subscriber.Email}: {ex.Message}";
+        }
+
+    }
+
+    private sealed class Subscriber
+    {
+        public string Email { get; set; } = null!;
+        public bool DailyNewsletter { get; set; }
+        public bool AdvertisingUpdates { get; set; }
+        public bool WeekInReview { get; set; }
+        public bool EventUpdates { get; set; }
+        public bool StartupsWeekly { get; set; }
+        public bool Podcasts { get; set; }
+    }
+
+}
+

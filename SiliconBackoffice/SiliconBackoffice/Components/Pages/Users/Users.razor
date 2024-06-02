@@ -1,0 +1,125 @@
+﻿@page "/users"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+
+
+
+@attribute [StreamRendering]
+
+
+<div class="container">
+
+
+    @if (!string.IsNullOrWhiteSpace(StatusMessage))
+    {
+        <div class="alert alert-danger error-message">
+            @StatusMessage
+        </div>
+    }
+
+
+
+    <div class="users">
+        <h1>Users</h1>
+
+
+        @if (users != null)
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>First name</th>
+                        <th>Last name</th>
+                        <th>Email</th>
+                        <th>Option</th>
+                    </tr>
+                </thead>
+
+
+                <tbody>
+
+                    @foreach (var user in users)
+                    {
+                        <tr>
+                            <th>@user.FirstName</th>
+                            <th>@user.LastName</th>
+                            <th>@user.Email</th>
+                            <th>
+                                <a href="/edituser?id=@user.Id">Edit</a>
+
+                            </th>
+                        </tr>
+                    }
+
+                </tbody>
+
+
+
+            </table>
+        }
+        else
+        {
+            <p>Loading...</p>
+        }
+
+       
+    </div>
+</div>
+
+@code {
+    private ApplicationUser[]? users;
+
+    [SupplyParameterFromQuery]
+    public string StatusMessage { get; set; } = "";
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            users = await Http.GetFromJsonAsync<ApplicationUser[]>("https://silicon-userprovider.azurewebsites.net/api/GetUsers?code=K9jM3zuKdJQ53URuT1-cNY9X6r7nYHUXRI1s3Oui3ffPAzFu8Gq6Ow%3D%3D");
+
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error loading users: {ex.Message}";
+        }
+    }
+
+    private async Task DeleteUserAsync(ApplicationUser user)
+    {
+
+        try
+        {
+            var response = await Http.DeleteAsync($"https://silicon-userprovider.azurewebsites.net/api/DeleteUser?code=VBZsZazEJM9Bl6Z1jcKvZIwXOv1xEWQ1o9Aix8EZd5egAzFuzdqFtQ%3D%3D");
+            if (response.IsSuccessStatusCode)
+            {
+                StatusMessage = $"User {user.Email} deleted successfully!";
+                StateHasChanged();
+            }
+            else
+            {
+                StatusMessage = $"Error deleting user {user.Email}: {response.ReasonPhrase}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error deleting user {user.Email}: {ex.Message}";
+        }
+
+    }
+
+    private sealed class ApplicationUser
+    {
+        public string Id { get; set; } = null!;
+        public string FirstName { get; set; } = null!;
+        public string LastName { get; set; } = null!;
+        public string Email { get; set; } = null!;
+        public string? PhoneNumber { get; set; }
+        public string? Bio { get; set; }
+    }
+
+}
+
