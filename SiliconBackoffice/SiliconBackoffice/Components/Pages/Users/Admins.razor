@@ -4,14 +4,13 @@
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 
-
+@inject RoleManager<IdentityRole> RoleManager
+@inject UserManager<ApplicationUser> UserManager
 
 @attribute [StreamRendering]
 
 
 <div class="container">
-
-
     @if (!string.IsNullOrWhiteSpace(StatusMessage))
     {
         <div class="alert alert-danger error-message">
@@ -19,12 +18,8 @@
         </div>
     }
 
-
-
     <div class="users">
         <h1>Admins</h1>
-
-
         @if (users != null)
         {
             <table class="table">
@@ -32,46 +27,34 @@
                     <tr>
                         <th>Email</th>
                         <th>User ID</th>
-                        <th>Role name</th>
-                        <th>Role ID</th>
+                        <th>Roles</th>
                         <th>Option</th>
                     </tr>
                 </thead>
-
-
                 <tbody>
-
                     @foreach (var user in users)
                     {
                         <tr>
-                            <th>@user.Email</th>
-                            <th>@user.Id</th>
-                            <th>@user.RoleName</th>
-                            <th>@user.RoleID</th>
-                            <th>
+                            <td>@user.Email</td>
+                            <td>@user.Id</td>
+                            <td>@string.Join(", ", user.Roles)</td>
+                            <td>
                                 <a href="/edituser?id=@user.Id">Edit</a>
-
-                            </th>
+                            </td>
                         </tr>
                     }
-
                 </tbody>
-
-
-
             </table>
         }
         else
         {
             <p>Loading...</p>
         }
-
-
     </div>
 </div>
 
 @code {
-    private ApplicationUser[]? users;
+    private List<Admin> admins;
 
     [SupplyParameterFromQuery]
     public string StatusMessage { get; set; } = "";
@@ -81,7 +64,19 @@
     {
         try
         {
-            users = await Http.GetFromJsonAsync<ApplicationUser[]>("https://silicon-userprovider.azurewebsites.net/api/GetUsers?code=K9jM3zuKdJQ53URuT1-cNY9X6r7nYHUXRI1s3Oui3ffPAzFu8Gq6Ow%3D%3D");
+            var userList = await UserManager.Users.ToListAsync();
+            admins = new List<Admin>();
+
+            foreach (var user in userList)
+            {
+                var roles = await UserManager.GetRolesAsync(user);
+                admins.Add(new Admin
+                    {
+                        Id = user.Id,
+                        Email = user.Email,
+                        Roles = roles.ToList()
+                    });
+            }
         }
         catch (Exception ex)
         {
@@ -112,12 +107,11 @@
 
     }
 
-    private sealed class ApplicationUser
+    private sealed class Admin
     {
-        public string Id { get; set; } = null!;
-        public string Email { get; set; } = null!;
-        public string? RoleName { get; set; }
-        public string? RoleID { get; set; }
+        public string Id { get; set; }
+        public string Email { get; set; }
+        public List<string> Roles { get; set; } = new List<string>();
     }
 
 }

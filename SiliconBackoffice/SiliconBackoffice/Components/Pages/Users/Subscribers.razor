@@ -55,7 +55,7 @@
                             <th>@subscriber.StartupsWeekly</th>
                             <th>@subscriber.Podcasts</th>
                             <th>
-                                <a href="/editsubscriber?email=@subscriber.Email">Edit</a>
+                                <a href="/editsubscriber?id=@subscriber.Id">Edit</a>
 
                             </th>
                         </tr>
@@ -121,6 +121,7 @@
 
     private sealed class Subscriber
     {
+        public string Id { get; set; } = null!;
         public string Email { get; set; } = null!;
         public bool DailyNewsletter { get; set; }
         public bool AdvertisingUpdates { get; set; }

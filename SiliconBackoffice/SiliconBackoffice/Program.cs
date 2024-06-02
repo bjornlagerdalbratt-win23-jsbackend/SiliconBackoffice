@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SiliconBackoffice.Client.Pages;
 using SiliconBackoffice.Components;
 using SiliconBackoffice.Components.Account;
+using SiliconBackoffice.Components.Pages.Users;
 using SiliconBackoffice.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,6 +38,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
+    
 
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
