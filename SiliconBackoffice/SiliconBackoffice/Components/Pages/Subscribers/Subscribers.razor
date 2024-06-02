@@ -1,12 +1,8 @@
 ﻿@page "/subscribers"
-@using System.ComponentModel.DataAnnotations
-@using Microsoft.AspNetCore.Components.Forms
-@using Microsoft.AspNetCore.Identity
-@using Microsoft.EntityFrameworkCore
+
+@rendermode InteractiveServer
 
 
-
-@attribute [StreamRendering]
 
 
 <div class="container">
@@ -37,7 +33,8 @@
                         <th>EventUpdates</th>
                         <th>StartupsWeekly</th>
                         <th>Podcasts</th>
-                        <th>Option</th>
+                        <th>Edit</th>
+                        <th>Delete</th>
                     </tr>
                 </thead>
 
@@ -56,7 +53,9 @@
                             <th>@subscriber.Podcasts</th>
                             <th>
                                 <a href="/editsubscriber?id=@subscriber.Id">Edit</a>
-
+                            </th>
+                            <th>
+                                <button class="btn btn-danger" @onclick="() => InvokeAsync(() => DeleteSubscriberAsync(subscriber))">Delete</button>
                             </th>
                         </tr>
                     }
@@ -85,10 +84,14 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadSubscribersAsync();
+    }
+
+    private async Task LoadSubscribersAsync()
+    {
         try
         {
             subscribers = await Http.GetFromJsonAsync<Subscriber[]>("https://silicon-newsletterprovider.azurewebsites.net/api/GetAllSubscribers?code=9TTAiRMrIzUswqpQB3anruTZrOb53bRINwlfFA1_C952AzFugPdsZA%3D%3D");
-
         }
         catch (Exception ex)
         {
@@ -96,28 +99,36 @@
         }
     }
 
+
+
     private async Task DeleteSubscriberAsync(Subscriber subscriber)
     {
 
-        try
-        {
-            var response = await Http.DeleteAsync($"https://silicon-newsletterprovider.azurewebsites.net/api/UnSubscribe?code=gBbP_WxXfBNF7Q3IOeL316GAzO3CQ72JPMxejTrIyYGjAzFut58_OQ%3D%3D");
-            if (response.IsSuccessStatusCode)
+        var unsubscribeRequest = new UnsubscribeRequest
             {
-                StatusMessage = $"Subscriber {subscriber.Email} unsubscribed successfully!";
-                StateHasChanged();
-            }
-            else
-            {
-                StatusMessage = $"Error removing Subscriber {subscriber.Email}: {response.ReasonPhrase}";
-            }
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error removing Subscriber {subscriber.Email}: {ex.Message}";
-        }
+                Email = subscriber.Email
+            };
 
+        var jsonContent = new StringContent(JsonConvert.SerializeObject(unsubscribeRequest), Encoding.UTF8, "application/json");
+
+        var request = new HttpRequestMessage(HttpMethod.Delete, "https://silicon-newsletterprovider.azurewebsites.net/api/UnSubscribe?code=gBbP_WxXfBNF7Q3IOeL316GAzO3CQ72JPMxejTrIyYGjAzFut58_OQ%3D%3D&email")
+            {
+                Content = jsonContent
+            };
+
+        var unsubscribeResult = await Http.SendAsync(request);
+        if (unsubscribeResult.IsSuccessStatusCode)
+        {
+            StatusMessage = "Success";
+            await LoadSubscribersAsync();
+        }
+        else
+        {
+            StatusMessage = "Error";
+        }
+        
     }
+
 
     private sealed class Subscriber
     {
@@ -129,6 +140,11 @@
         public bool EventUpdates { get; set; }
         public bool StartupsWeekly { get; set; }
         public bool Podcasts { get; set; }
+    }
+
+    public sealed class UnsubscribeRequest
+    {
+        public string Email { get; set; } = string.Empty!;
     }
 
 }
