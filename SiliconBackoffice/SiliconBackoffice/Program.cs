@@ -1,3 +1,4 @@
+using GkuChat.Hubs;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -49,6 +50,11 @@ builder.Services.ConfigureApplicationCookie(x =>
     x.AccessDeniedPath = "/Account/AccessDenied";
 });
 
+builder.Services.AddSignalR();
+
+
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -75,5 +81,6 @@ app.MapRazorComponents<App>()
 app.MapAdditionalIdentityEndpoints();
 
 
+app.MapHub<ChatHub>("/chathub");
 
 app.Run();

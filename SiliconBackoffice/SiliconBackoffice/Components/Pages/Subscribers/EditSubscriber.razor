@@ -1,6 +1,6 @@
 ﻿@page "/editsubscriber"
 
-
+@rendermode InteractiveServer
 
 
 <div>
@@ -8,7 +8,7 @@
         @StatusMessage
     </div>
     <h4 class="mb-4">Edit subscriber</h4>
-    <EditForm class="form-group" FormName="subscriberform" Model="SubscriberForm" OnValidSubmit="HandleSubmit">
+    <EditForm class="form-group" method="post" FormName="subscriberform" Model="SubscriberForm" OnValidSubmit="HandleSubmit" novalidate>
         <div class="mb-3">
             <label class="form-check-label">Daily Newsletter</label>
             <InputCheckbox class="form-check-input" @bind-Value="SubscriberForm.DailyNewsletter" />
@@ -50,7 +50,7 @@
     public string StatusMessage { get; set; } = "";
 
 
-    [SupplyParameterFromForm]
+    [SupplyParameterFromForm(FormName ="subscriberform")]
     private SubscribeModel SubscriberForm { get; set; } = new();
 
     protected override async Task OnInitializedAsync()
@@ -106,12 +106,12 @@
 
     private sealed class SubscribeModel
     {
-        public bool DailyNewsletter { get; set; }
-        public bool AdvertisingUpdates { get; set; }
-        public bool WeekInReview { get; set; }
-        public bool EventUpdates { get; set; }
-        public bool StartupsWeekly { get; set; }
-        public bool Podcasts { get; set; }
+        public bool DailyNewsletter { get; set; } = false;
+        public bool AdvertisingUpdates { get; set; } = false;
+        public bool WeekInReview { get; set; } = false;
+        public bool EventUpdates { get; set; } = false;
+        public bool StartupsWeekly { get; set; } = false;
+        public bool Podcasts { get; set; } = false;
     }
 
     private sealed class Subscriber
